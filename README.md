@@ -4,9 +4,12 @@ Templating engine for text-based status bars.
 
 #### Running
 Basic config: outputs data to stdout
-`PYTHONPATH=/path/to/pystatusbar/.. python3 -m pystatusbar --config /path/to/pystatusbar/config_example.config`
+
+    PYTHONPATH=/path/to/pystatusbar/.. python3 -m pystatusbar --config /path/to/pystatusbar/config_example.config
+
 More complete config: more modules, runs xmobar and shows data there
-`PYTHONPATH=/path/to/pystatusbar/.. python3 -m pystatusbar --config /path/to/pystatusbar/config_bxpsd.config`
+
+    PYTHONPATH=/path/to/pystatusbar/.. python3 -m pystatusbar --config /path/to/pystatusbar/config_bxpsd.config
 
 
 #### TODO
