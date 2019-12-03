@@ -120,9 +120,14 @@ class Battery():
             # if current is flowing battery is either charging or discharging
             if sys_class_status == "Charging":
                 return "Charging"
-            if sys_class_status == "Unknown":
+            elif sys_class_status == "Unknown":
                 return "Discharging"
-            if sys_class_status == "Discharging":
+            elif sys_class_status == "Discharging":
+                return "Discharging"
+            else:
+                # Rarely happens (~1x per mo). It seems to only occur temporarily after
+                # when plugging in or unplugging the charger. 
+                logging.warning(f"Unknown status {repr(sys_class_status)}")
                 return "Discharging"
         else:
             # no current through battery so must be idling on AC
