@@ -6,7 +6,15 @@ import time
 from .prototype_module import PrototypeModule
 
 
+class NoDefaultGatewayError(Exception):
+    pass
+
+class LinkDownError(Exception):
+    pass
+
 def _get_default_network_adapter():
+    # get the default network adapter by reading first line of "ip route list"
+    # examples of some possible output lines:
     # default via 10.0.0.1 dev wlp2s0 
     # 10.0.0.0/24 dev wlp2s0 proto kernel scope link src 10.0.0.233 
     # 192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown 
@@ -15,15 +23,17 @@ def _get_default_network_adapter():
     first_output_line = completed_process.stdout.decode("utf-8").split('\n')[0]
     try:
         split_line_values = first_output_line.split()
+
+        # if first value is not 'default', then there is no default gateway
+        if split_line_values[0] != 'default':
+            raise NoDefaultGatewayError()
+
         ip = split_line_values[2]
         dev = split_line_values[4]
 
-        link_is_down = False
-        try:
-            if split_line_values[5] == "linkdown":
-                link_is_down = True
-        except IndexError:
-            pass
+        # if link is down, then the last value should be 'linkdown'
+        if split_line_values[-1] == "linkdown":
+            raise LinkDownError()
 
     except ValueError:
         raise RuntimeError("Unexpected response from 'ip route': {}".format(repr(first_output_line)))
@@ -88,7 +98,33 @@ class NetworkModule(PrototypeModule):
     def _run(self):
         template = self.config_dict['template'][:]
 
-        interface, receive_speed, transmit_speed = self._get_network_transfer_speeds()
+        if 'network_down_message' in self.config_dict:
+            network_down_message = self.config_dict['network_down_message']
+        else:
+            network_down_message = 'No active network'
+
+        if 'hide_if_under_value' in self.config_dict:
+            hide_if_under_value = self.config_dict['hide_if_under_value']
+        else:
+            hide_if_under_value = 0
+
+        if 'hide_if_over_value' in self.config_dict:
+            hide_if_over_value = self.config_dict['hide_if_over_value']
+        else:
+            hide_if_over_value = 9e99
+
+        try:
+            interface, receive_speed, transmit_speed = self._get_network_transfer_speeds()
+        except (NoDefaultGatewayError, LinkDownError):
+            return network_down_message
+
+        # hide the whole template if configured to hide and both values are in a range
+        # that should be hidden
+        if ((receive_speed < hide_if_under_value or receive_speed > hide_if_over_value)
+                and (transmit_speed < hide_if_under_value or transmit_speed > hide_if_over_value)):
+            return ''
+
+
         receive_speed = self._format_value(
             receive_speed,
             self.config_dict,

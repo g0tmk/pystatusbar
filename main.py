@@ -102,6 +102,14 @@ def setup_logging(verbose=False):
         level=logging.DEBUG)
 
 def format_stdin_line(line):
+    # Turns out xmonad does this automatically to the input, since stdin input contains
+    # things like color codes - so wrapping in <raw> tags does not seem to be
+    # necessary yet.
+    #
+    # Interestingly, xmonad appears to actually remove format codes from the input,
+    # instead of escaping them. So if some window title happens to be a format code
+    # that title will not be shown in the bar at all.
+    #
     #return "<raw={}:{}/>".format(len(line), line)
     return line
 
@@ -192,7 +200,11 @@ def main():
     setup_logging(verbose=args.verbose)
     logging.debug("Starting {} version: {}".format(_PROGRAM_NAME, _VERSION))
 
-    config = ConfigFile(args.config)
+    try:
+        config = ConfigFile(args.config)
+    except ConfigParseError as e:
+        logging.critical('Error loading config file. {}'.format(e))
+        return 1
 
     stop_main_event = Event()
     stop_worker_event = Event()

@@ -57,7 +57,22 @@ class CPUModule(PrototypeModule):
     def _run(self):
         template = self.config_dict['template'][:]
 
+        if 'hide_if_under_value' in self.config_dict:
+            hide_if_under_value = self.config_dict['hide_if_under_value']
+        else:
+            hide_if_under_value = 0
+
+        if 'hide_if_over_value' in self.config_dict:
+            hide_if_over_value = self.config_dict['hide_if_over_value']
+        else:
+            hide_if_over_value = 100
+
         cpu_percentage = self._get_cpu_percentage() * 100
+
+        # hide the whole template if configured to hide it
+        if cpu_percentage < hide_if_under_value or cpu_percentage > hide_if_over_value:
+            return ''
+
         cpu_percentage = self._format_value(cpu_percentage, self.config_dict)
 
         template = template.replace('<total>', cpu_percentage)

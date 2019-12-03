@@ -296,6 +296,20 @@ class BatteryModule(PrototypeModule):
 
     def _run(self):
 
+        if 'hide_if_under_value' in self.config_dict:
+            hide_if_under_value = self.config_dict['hide_if_under_value']
+        else:
+            hide_if_under_value = 0
+
+        if 'hide_if_over_value' in self.config_dict:
+            hide_if_over_value = self.config_dict['hide_if_over_value']
+        else:
+            hide_if_over_value = 100
+
+        # hide the whole template if configured to hide it
+        if self._battery.charge_percent < hide_if_under_value or self._battery.charge_percent > hide_if_over_value:
+            return ''
+
         return self._battery.format_status(
             '<acstatus>',
             low_threshold=None if 'low_value' not in self.config_dict else self.config_dict['low_value'],
