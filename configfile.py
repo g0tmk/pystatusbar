@@ -7,12 +7,12 @@ MINIMUM_UPDATE_RATE = 0.001
 class ConfigParseError(Exception):
     pass
 
-class ConfigError(Exception):
-    pass
+# class ConfigError(Exception):
+#     pass
 
 def check_and_convert_type(key, value):
     # float types
-    if key in ['update_rate', 'low_value', 'high_value']:
+    if key in ['update_rate', 'low_value', 'high_value', 'hide_if_over_value', 'hide_if_under_value']:
         try:
             result = float(value)
         except ValueError:
@@ -31,6 +31,13 @@ def check_and_convert_type(key, value):
         if not re.match(r'#[a-f0-9]{6}|[a-z]+', result):
             fmt_str = "Setting {} formatting not recognized - should be hex (#000000) or text (black)."
             raise ConfigError(fmt_str.format(repr(key)))
+
+    # string types. all are valid, but if config file
+    elif key in ['network_down_message']:
+        if value is None:
+            result = ""
+        else:
+            result = value
 
     else:
         result = value
@@ -167,24 +174,25 @@ class ConfigFile():
 
                 if identifier in config_dictionary:
                     raise ConfigParseError(
-                        "line {}: Found duplicate definition for identifier '{}'.".format(line_number, identifier))
+                        "Line {}: Found duplicate definition for identifier '{}'.".format(line_number, identifier))
 
                 config_dictionary[identifier] = {}
                 config_dictionary[identifier]['module'] = current_module
                 continue
 
-            match = re.match(r'([a-zA-Z_]+): (.+)', line)
+            match = re.match(r'^([a-zA-Z_]+): ?(.*)', line)
+            #print('line', line_number, '{}'.format(repr(line)), 'match' if match else 'no match')
             if match:
                 key = match.group(1).lower()
                 value = match.group(2)
                 try:
                     value = check_and_convert_type(key, value)
-                except ConfigError as e:
-                    raise ConfigParseError("line {}: {}".format(line_number, e))
+                except ConfigParseError as e:
+                    raise ConfigParseError("Line {}: {}".format(line_number, e))
                 config_dictionary[identifier][key] = value
                 continue
 
-            raise ConfigParseError("line {}: Error parsing line.".format(line_number))
+            raise ConfigParseError("Line {}: Error parsing line.".format(line_number))
 
         self.config_dictionary = config_dictionary
 
