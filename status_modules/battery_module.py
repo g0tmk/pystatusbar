@@ -1,6 +1,7 @@
 import time
 import subprocess
 import re
+import logging
 
 from .prototype_module import PrototypeModule
 
