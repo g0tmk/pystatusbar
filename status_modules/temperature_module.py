@@ -6,13 +6,21 @@ from .prototype_module import PrototypeModule
 from ..configfile import ConfigParseError
 
 
+class TemporaryError(Exception):
+    pass
+
 def _get_temp_degrees_c_thermalzone(zone):
     path = "/sys/class/thermal/thermal_zone{}/temp".format(zone)
     try:
         with open(path, "r") as handle:
             response = handle.readline().strip()
-    except OSError:
-        raise ConfigParseError("Failed to read from '{}'".format(path))
+    except (OSError, TimeoutError):
+        # This should only throw errors when reading from a thermal zone that is valid,
+        # but is temporarily unavailable
+        raise TemporaryError("Failed to read from '{}'".format(path))
+    except IOError:
+        # IOError thrown when opening invalid file
+        raise ConfigParseError("Failed to open file {}".format(path))
 
     try:
         temp_degrees_c = float(response) / 1000.0
@@ -45,8 +53,12 @@ class TemperatureModule(PrototypeModule):
                 self.config_dict['zone']
             except KeyError:
                 raise ConfigParseError("Could not find 'zone' defined for Temperature module.")
-            else:
+            
+            try:
                 temp_degrees_c = _get_temp_degrees_c_thermalzone(self.config_dict['zone'])
+            except TemporaryError:
+                return "Waiting..."
+
         else:
             raise ConfigParseError("Unsupported Temperature module type {}".format(repr(self.config_dict['type'])))
 
