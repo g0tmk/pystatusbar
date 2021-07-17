@@ -24,8 +24,12 @@ def _get_default_network_adapter():
     try:
         split_line_values = first_output_line.split()
 
-        # if first value is not 'default', then there is no default gateway
-        if split_line_values[0] != 'default':
+        try:
+            # if first value is not 'default', then there is no default gateway
+            if split_line_values[0] != 'default':
+                raise NoDefaultGatewayError()
+        except IndexError:
+            logging.warning(f"unexpected output from ip route: '{first_output_line}'")
             raise NoDefaultGatewayError()
 
         ip = split_line_values[2]
