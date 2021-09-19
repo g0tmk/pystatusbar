@@ -13,6 +13,9 @@ More complete config: more modules, runs xmobar and shows data there
 
 
 #### TODO
+ - When connected to vpn, network speed module does not show network traffic to devices
+   on the local network. Should ignore a few devices, and total the rest, instead of 
+   only showing traffic through the default device.
  - Add preprocessor module to config file. On first run, convert config file to a more
    native format (pickle?) and save that somewhere along with the config's checksum.
    This should speed up subsequent launches with the same config file.
