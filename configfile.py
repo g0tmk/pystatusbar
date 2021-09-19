@@ -19,7 +19,7 @@ def check_and_convert_type(key, value):
             raise ConfigError("Setting {} should be a number.".format(repr(key)))
 
     # integer types
-    elif key in ['significant_figures', 'zone', 'min_width']:
+    elif key in ['significant_figures', 'zone', 'min_width', 'average_over_samples']:
         try:
             result = int(value)
         except ValueError:

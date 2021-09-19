@@ -10,6 +10,7 @@ class CPUModule(PrototypeModule):
         "template": "<total>%",
         "decimals": 0,
     }
+    _sample_record = []
 
     def _get_cpu_percentage(self):
         # user    nice   system  idle      iowait irq   softirq  steal  guest  guest_nice
@@ -67,7 +68,21 @@ class CPUModule(PrototypeModule):
         else:
             hide_if_over_value = 100
 
+        if 'average_over_samples' in self.config_dict:
+            average_over_samples = self.config_dict['average_over_samples']
+        else:
+            average_over_samples = 1
+
         cpu_percentage = self._get_cpu_percentage() * 100
+
+        # TODO: move the average_over_samples functionality to a PrototypeModule method
+        # average the samples
+        if average_over_samples > 1:
+            self._sample_record.append(cpu_percentage)
+            # trim the list to the desired number of samples
+            self._sample_record = self._sample_record[-average_over_samples:]
+            # calc average
+            cpu_percentage = sum(self._sample_record) / len(self._sample_record)
 
         # hide the whole template if configured to hide it
         if cpu_percentage < hide_if_under_value or cpu_percentage > hide_if_over_value:
